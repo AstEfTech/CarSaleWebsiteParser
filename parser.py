@@ -12,23 +12,10 @@ import requests
 import urllib
 from bs4 import BeautifulSoup
 
+from base_classes import Car
 from websites import *
 
 from pprint import pprint
-
-
-class Car(TypedDict):
-    name: str
-    description: str
-    tech_description: str
-    year: str  # TODO
-    engine_volume: str  # TODO
-    mileage: str
-    fuel: str
-    transmission: str
-    price: str
-    place: str
-    href: str
 
 
 class CarSaleWebsiteParser:
@@ -56,11 +43,10 @@ class CarSaleWebsiteParser:
 
     def define_results_count(self):
         page = self.get_page(self.url)
-        print(page)
         soup = BeautifulSoup(page, self.parser)
         results_count_data = self.find_text_by_attrs(soup, self.website.results_count_mask)
-        results_count = re.findall(r'\d+', results_count_data)
-        results_count_num = int(''.join(results_count))
+        results_count = re.findall(self.website.results_count_regex, results_count_data.replace(' ', ''))
+        results_count_num = int(results_count[0])
         return results_count_num
 
     def get_page(self, url):
@@ -81,16 +67,14 @@ class CarSaleWebsiteParser:
             name = self.find_text_by_attrs(car, attrs=self.website.car.name_mask)
             description = self.find_text_by_attrs(car, attrs=self.website.car.description_mask)
             tech_description = self.find_text_by_attrs(car, attrs=self.website.car.tech_description_mask)
-            price = self.find_text_by_attrs(car, attrs=self.website.car.price_mask)
+            price = self.find_text_by_attrs(car, attrs=self.website.car.price_mask).replace(' ', '')
             place = self.find_text_by_attrs(car, attrs=self.website.car.place_mask)
             href = self.find_href_by_attrs(car, attrs=self.website.car.href_mask)
-            tech_description_dict = self.website.parse_tech_description(tech_description)
-            car_item = Car(name=name, description=description, tech_description=tech_description,
-                           mileage=tech_description_dict.get('mileage'),
-                           fuel=tech_description_dict.get('fuel'),
-                           transmission=tech_description_dict.get('transmission'),
-                           price=price, place=place, href=href,
-                           )
+            parsed_car_info = dict(name=name, description=description, tech_description=tech_description,
+                                   price=price, place=place, href=href)
+            print(parsed_car_info)
+            description_dict = self.website.parse_tech_description(parsed_car_info, description_parse_regex=self.website.car.description_parse_regex)
+            car_item = Car(**{index: description_dict.get(index) for index in Car.__annotations__.keys()})
             cars_on_page.append(car_item)
         # pprint(cars_on_page)
         return cars_on_page
@@ -130,10 +114,10 @@ class CarSaleWebsiteParser:
     def get_car_info_by_filter(self):
         print(f'Getting results for {self.pages_count} pages at {self.url}')
         for page_url, page_num in self.generate_next_page():
-            html_text = self.get_page(page_url)
             data_recieved = False
             retry_num = self.retry_num
             while not data_recieved:
+                html_text = self.get_page(page_url)
                 page_car_data = self.get_car_page_info(html_text)
                 sleep(2)
                 if page_car_data:
@@ -162,6 +146,7 @@ class CarSaleWebsiteParser:
         for car_data in self.get_car_info_by_filter():
             dataframe = pd.DataFrame.from_dict(car_data)
             full_df = pd.concat([full_df, dataframe], axis=0)
+        full_df.reset_index()
         resulting_file_path = os.path.join(os.getcwd(), 'out_files')
         os.makedirs(resulting_file_path, exist_ok=True)
         full_df.to_excel(os.path.join(resulting_file_path, output_file_name + '.xlsx'),
