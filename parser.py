@@ -21,9 +21,13 @@ class Car(TypedDict):
     name: str
     description: str
     tech_description: str
+    year: str  # TODO
+    engine_volume: str  # TODO
+    mileage: str
+    fuel: str
+    transmission: str
     price: str
     place: str
-    date: str
     href: str
 
 
@@ -52,6 +56,7 @@ class CarSaleWebsiteParser:
 
     def define_results_count(self):
         page = self.get_page(self.url)
+        print(page)
         soup = BeautifulSoup(page, self.parser)
         results_count_data = self.find_text_by_attrs(soup, self.website.results_count_mask)
         results_count = re.findall(r'\d+', results_count_data)
@@ -78,10 +83,14 @@ class CarSaleWebsiteParser:
             tech_description = self.find_text_by_attrs(car, attrs=self.website.car.tech_description_mask)
             price = self.find_text_by_attrs(car, attrs=self.website.car.price_mask)
             place = self.find_text_by_attrs(car, attrs=self.website.car.place_mask)
-            date = self.find_text_by_attrs(car, attrs=self.website.car.date_mask)
             href = self.find_href_by_attrs(car, attrs=self.website.car.href_mask)
-            car_item = Car(name=name, description=description, tech_description=tech_description, price=price,
-                           place=place, date=date, href=href)
+            tech_description_dict = self.website.parse_tech_description(tech_description)
+            car_item = Car(name=name, description=description, tech_description=tech_description,
+                           mileage=tech_description_dict.get('mileage'),
+                           fuel=tech_description_dict.get('fuel'),
+                           transmission=tech_description_dict.get('transmission'),
+                           price=price, place=place, href=href,
+                           )
             cars_on_page.append(car_item)
         # pprint(cars_on_page)
         return cars_on_page
@@ -155,13 +164,14 @@ class CarSaleWebsiteParser:
             full_df = pd.concat([full_df, dataframe], axis=0)
         resulting_file_path = os.path.join(os.getcwd(), 'out_files')
         os.makedirs(resulting_file_path, exist_ok=True)
-        full_df.to_excel(os.path.join(resulting_file_path, output_file_name + '.xlsx'), sheet_name=self.website.short_name)
+        full_df.to_excel(os.path.join(resulting_file_path, output_file_name + '.xlsx'),
+                         sheet_name=self.website.short_name)
 
 
 if __name__ == '__main__':
     filtered_link = input('Input URL:\n')
     # filtered_link = 'https://cars.av.by/filter?brands[0][brand]=8&year[min]=2022&page=1'
     # filtered_link = 'https://www.otomoto.pl/osobowe/bmw?search%5Bfilter_float_price%3Ato%5D=5000'
-    website_list_ = [OtomotoPl, AVBy, SuchenMobileDe]
+    website_list_ = [OtomotoPl, AVBy, SuchenMobileDe, AutoScout24]
     pars = CarSaleWebsiteParser(filtered_link, website_list=website_list_)
     pars.write_car_info()
