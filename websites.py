@@ -79,7 +79,7 @@ class OtomotoPl(CarSaleWebsite):
         }
 
 
-class AutoScout24(CarSaleWebsite):
+class AutoScout24pl(CarSaleWebsite):
     def __init__(self):
         super().__init__()
         self.short_name = 'autoscout24'
@@ -111,7 +111,7 @@ class AutoScout24(CarSaleWebsite):
 
 
 if __name__ == '__main__':
-    ws = AutoScout24()
+    ws = AutoScout24pl()
     ws.parse_tech_description({'name': 'BMW 223 i xDrive Active Tourer M Sportpaket Head-Up', 'description': None,
                                'tech_description': '3 900 kmAutomatyczna03/2023Benzyna150 kW (204 KM)',
                                'price': '€51470,-', 'place': 'Harald Knieps • DE-53474 Bad Neuenahr-Ahrweiler',

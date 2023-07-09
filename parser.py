@@ -72,11 +72,9 @@ class CarSaleWebsiteParser:
             href = self.find_href_by_attrs(car, attrs=self.website.car.href_mask)
             parsed_car_info = dict(name=name, description=description, tech_description=tech_description,
                                    price=price, place=place, href=href)
-            print(parsed_car_info)
             description_dict = self.website.parse_tech_description(parsed_car_info, description_parse_regex=self.website.car.description_parse_regex)
             car_item = Car(**{index: description_dict.get(index) for index in Car.__annotations__.keys()})
             cars_on_page.append(car_item)
-        # pprint(cars_on_page)
         return cars_on_page
 
     def generate_next_page(self):
@@ -155,8 +153,6 @@ class CarSaleWebsiteParser:
 
 if __name__ == '__main__':
     filtered_link = input('Input URL:\n')
-    # filtered_link = 'https://cars.av.by/filter?brands[0][brand]=8&year[min]=2022&page=1'
-    # filtered_link = 'https://www.otomoto.pl/osobowe/bmw?search%5Bfilter_float_price%3Ato%5D=5000'
-    website_list_ = [OtomotoPl, AVBy, SuchenMobileDe, AutoScout24]
+    website_list_ = [OtomotoPl, AVBy, SuchenMobileDe, AutoScout24pl]
     pars = CarSaleWebsiteParser(filtered_link, website_list=website_list_)
     pars.write_car_info()
