@@ -120,12 +120,12 @@ class CarSaleWebsiteParser:
                 sleep(2)
                 if page_car_data:
                     data_recieved = True
-                    print(f'Data from page {page_url} received')
+                    print(f'Data from page {page_num} {page_url} received')
                 elif not page_car_data and retry_num == 0:
-                    print(f'Data from page {page_url} is not received, skipping... (Retries left {retry_num})')
+                    print(f'Data from page {page_num} {page_url} is not received, skipping... (Retries left {retry_num})')
                     break
                 else:
-                    print(f'Data from page {page_url} is not received, retrying... (Retries left {retry_num})')
+                    print(f'Data from page {page_num} {page_url} is not received, retrying... (Retries left {retry_num})')
                     retry_num -= 1
             yield page_car_data
 
@@ -144,7 +144,10 @@ class CarSaleWebsiteParser:
         for car_data in self.get_car_info_by_filter():
             dataframe = pd.DataFrame.from_dict(car_data)
             full_df = pd.concat([full_df, dataframe], axis=0)
-        full_df.reset_index()
+        full_df.reset_index(inplace=True)
+        full_df['price'] = pd.to_numeric(full_df['price'])
+        full_df['year'] = pd.to_numeric(full_df['year'])
+        full_df['mileage'] = pd.to_numeric(full_df['mileage'])
         resulting_file_path = os.path.join(os.getcwd(), 'out_files')
         os.makedirs(resulting_file_path, exist_ok=True)
         full_df.to_excel(os.path.join(resulting_file_path, output_file_name + '.xlsx'),

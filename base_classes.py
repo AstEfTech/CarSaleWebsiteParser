@@ -71,7 +71,6 @@ class CarSaleWebsite:
                 else:
                     if not result.get(index):
                         result[index] = None
-        print(result)
         return {**description_dict, **result}
 
 
